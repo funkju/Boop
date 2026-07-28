@@ -46,6 +46,28 @@ final class MarkdownDetectorTests: XCTestCase {
         XCTAssertTrue(MarkdownDetector.looksLikeMarkdown(text))
     }
 
+    func testDetectsShortNoteWithLeadingHeading() {
+        // Opening straight with "# Title" lowers the bar — a heading plus
+        // one inline signal is enough for a quick note.
+        let text = """
+        # Text Book
+        *this* is what really matters.
+        """
+        XCTAssertTrue(MarkdownDetector.looksLikeMarkdown(text))
+    }
+
+    func testRejectsPythonWithLeadingCommentAndDunders() {
+        // "# comment" first line looks like a heading, and __init__ must not
+        // score as bold — neither alone should tip detection.
+        let text = """
+        # fetch the data
+        import os
+        def __init__(self):
+            self.__dict__ = {}
+        """
+        XCTAssertFalse(MarkdownDetector.looksLikeMarkdown(text))
+    }
+
     func testRejectsShellScriptComments() {
         let text = """
         #!/bin/sh

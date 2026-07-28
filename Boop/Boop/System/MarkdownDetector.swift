@@ -22,6 +22,7 @@ enum MarkdownDetector {
         "rule": 2,
         "link": 6,
         "bold": 4,
+        "italic": 2,
         "inlinecode": 3,
         "fence": 6,
     ]
@@ -32,9 +33,18 @@ enum MarkdownDetector {
         var scores: [String: Int] = [:]
         var fenceCount = 0
         var inFence = false
+        var leadingHeading = false
+        var seenContent = false
 
         for rawLine in text.components(separatedBy: .newlines).prefix(400) {
             let line = rawLine.trimmingCharacters(in: .whitespaces)
+
+            if !seenContent && !line.isEmpty {
+                seenContent = true
+                // Opening straight with "# Title" is a strong tell; it earns
+                // a bonus and a lower acceptance bar below.
+                leadingHeading = matches(line, #"^#{1,6} \S"#)
+            }
 
             if line.hasPrefix("```") || line.hasPrefix("~~~") {
                 fenceCount += 1
@@ -62,8 +72,11 @@ enum MarkdownDetector {
             if matches(line, #"\[[^\]]+\]\([^)\s]+\)"#) {
                 scores["link", default: 0] += 3
             }
-            if matches(line, #"\*\*[^*\n]+\*\*|__[^_\n]+__"#) {
+            // No __bold__ variant: it matches Python dunders like __init__.
+            if matches(line, #"\*\*[^*\n]+\*\*"#) {
                 scores["bold", default: 0] += 2
+            } else if matches(line, #"\*[A-Za-z][^*\n]*\*"#) {
+                scores["italic", default: 0] += 1
             }
             if matches(line, #"`[^`\n]+`"#) {
                 scores["inlinecode", default: 0] += 1
@@ -73,11 +86,15 @@ enum MarkdownDetector {
         if fenceCount >= 2 {
             scores["fence"] = 3 * (fenceCount / 2)
         }
+        if leadingHeading {
+            scores["heading", default: 0] += 2
+        }
 
         let total = scores.reduce(0) { sum, entry in
             sum + min(entry.value, caps[entry.key] ?? entry.value)
         }
-        return total >= 6 && scores.count >= 2
+        let threshold = leadingHeading ? 4 : 6
+        return total >= threshold && scores.count >= 2
     }
 
     private static func matches(_ line: String, _ pattern: String) -> Bool {
