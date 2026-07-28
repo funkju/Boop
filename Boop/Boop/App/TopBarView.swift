@@ -2,17 +2,16 @@
 //  TopBarView.swift
 //  Boop
 //
-//  Floating top strip: script status/results centered, and a nearly
-//  invisible language selector tucked in the top-right corner.
+//  Title-bar controls: script status/results centered (toolbar principal
+//  item), and a nearly invisible language selector on the trailing edge.
 //
 
 import SwiftUI
 import CodeEditLanguages
 
-struct TopBarView: View {
+/// Centered status message, shown in the title bar.
+struct StatusPill: View {
     @ObservedObject var model: AppModel
-
-    @State private var hoveringLanguage = false
 
     private var statusColor: Color {
         switch model.status {
@@ -31,41 +30,33 @@ struct TopBarView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            statusView
-                .frame(maxWidth: .infinity, alignment: .center)
-            languageMenu
-                .frame(maxWidth: .infinity, alignment: .trailing)
+        Group {
+            if isTransientStatus {
+                Text(model.status.message)
+                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundStyle(statusColor)
+                    .lineLimit(1)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .glassEffect(.regular, in: .capsule)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            } else {
+                Text(model.status.message)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .opacity(0.55)
+                    .lineLimit(1)
+            }
         }
-        .padding(.horizontal, 12)
-        // Vertically center the ~20pt controls on the traffic lights,
-        // whose centers sit roughly 16pt below the window's top edge.
-        .frame(height: 32, alignment: .center)
+        .animation(.spring(duration: 0.25), value: model.status)
     }
+}
 
-    // MARK: - Status (centered, like classic Boop's result messages)
+/// Almost invisible language selector for the title bar's trailing edge.
+struct LanguageMenu: View {
+    @ObservedObject var model: AppModel
 
-    @ViewBuilder
-    private var statusView: some View {
-        if isTransientStatus {
-            Text(model.status.message)
-                .font(.system(size: 11.5, weight: .medium))
-                .foregroundStyle(statusColor)
-                .lineLimit(1)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-                .glassEffect(.regular, in: .capsule)
-                .transition(.opacity.combined(with: .move(edge: .top)))
-        } else {
-            Text(model.status.message)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .opacity(0.55)
-                .lineLimit(1)
-        }
-    }
-
-    // MARK: - Language selector (top right, almost invisible)
+    @State private var hovering = false
 
     private var isPlainText: Bool {
         model.language.id == .plainText
@@ -78,7 +69,7 @@ struct TopBarView: View {
         )
     }
 
-    private var languageMenu: some View {
+    var body: some View {
         Menu {
             Picker("Language", selection: languageBinding) {
                 Text("Plain Text").tag(CodeLanguage.default.id.rawValue)
@@ -107,8 +98,8 @@ struct TopBarView: View {
         .buttonStyle(.plain)
         .menuIndicator(.hidden)
         .fixedSize()
-        .opacity(hoveringLanguage ? 1 : (isPlainText ? 0.25 : 0.5))
-        .onHover { hoveringLanguage = $0 }
-        .animation(.easeOut(duration: 0.15), value: hoveringLanguage)
+        .opacity(hovering ? 1 : (isPlainText ? 0.25 : 0.5))
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
     }
 }
