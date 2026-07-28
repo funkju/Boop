@@ -84,6 +84,11 @@ final class AppModel: ObservableObject {
     func togglePalette() {
         paletteVisible.toggle()
         setStatus(paletteVisible ? .help("Select your action") : .normal)
+        if paletteVisible {
+            editor.blur()
+        } else {
+            editor.focus()
+        }
     }
 
     func hidePalette() {

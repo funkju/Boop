@@ -31,6 +31,13 @@ final class EditorCoordinator: TextViewCoordinator {
         textView.window?.makeFirstResponder(textView)
     }
 
+    /// Drops first responder off the AppKit text view so SwiftUI focus
+    /// (e.g. the palette's search field) can take over.
+    func blur() {
+        guard let textView = controller?.textView else { return }
+        textView.window?.makeFirstResponder(nil)
+    }
+
     func destroy() {
         controller = nil
     }

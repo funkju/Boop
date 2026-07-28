@@ -38,9 +38,6 @@ struct ScriptPaletteView: View {
                                 ScriptRowView(script: script, isSelected: index == selectedIndex)
                                     .id(index)
                                     .onTapGesture { model.run(script) }
-                                    .onHover { hovering in
-                                        if hovering { selectedIndex = index }
-                                    }
                             }
                         }
                         .padding(6)
@@ -58,7 +55,11 @@ struct ScriptPaletteView: View {
             query = ""
             results = []
             selectedIndex = 0
-            searchFocused = true
+            // The editor's AppKit text view holds first responder until the
+            // next runloop turn; focusing immediately gets silently dropped.
+            DispatchQueue.main.async {
+                searchFocused = true
+            }
         }
         .onChange(of: query) {
             results = model.scriptManager.search(query)
@@ -121,7 +122,7 @@ struct ScriptRowView: View {
 
     @ViewBuilder
     private var iconImage: some View {
-        if let name = script.icon, let nsImage = NSImage(named: name) {
+        if let nsImage = Self.icon(for: script.icon) {
             Image(nsImage: nsImage)
                 .resizable()
                 .scaledToFit()
@@ -129,5 +130,20 @@ struct ScriptRowView: View {
             Image(systemName: "sparkles")
                 .foregroundStyle(.secondary)
         }
+    }
+
+    /// Script icons ship in the asset catalog as "icons8-<name>"; scripts may
+    /// also name an SF Symbol directly.
+    private static func icon(for identifier: String?) -> NSImage? {
+        guard let identifier else {
+            return NSImage(named: "icons8-unknown")
+        }
+        if let named = NSImage(named: "icons8-\(identifier)") {
+            return named
+        }
+        if let symbol = NSImage(systemSymbolName: identifier, accessibilityDescription: nil) {
+            return symbol
+        }
+        return NSImage(named: "icons8-unknown")
     }
 }
