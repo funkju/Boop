@@ -77,7 +77,12 @@ struct ContentView: View {
             // sharedBackgroundVisibility(.hidden) opts out of the automatic
             // Liquid Glass capsules around toolbar items — bare text only.
             ToolbarItem(placement: .principal) {
-                StatusPill(model: model)
+                HStack(spacing: 10) {
+                    if model.pages.count > 1 {
+                        PageDots(model: model)
+                    }
+                    StatusPill(model: model)
+                }
             }
             .sharedBackgroundVisibility(.hidden)
             // Only offer the preview when the document is markdown (keep it

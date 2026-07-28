@@ -9,6 +9,30 @@
 import SwiftUI
 import CodeEditLanguages
 
+/// One dot per page; only rendered when there's more than one.
+struct PageDots: View {
+    @ObservedObject var model: AppModel
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(model.pages.indices, id: \.self) { index in
+                Button {
+                    model.goToPage(index)
+                } label: {
+                    Circle()
+                        .fill(index == model.currentPageIndex
+                              ? Color.primary.opacity(0.7)
+                              : Color.primary.opacity(0.22))
+                        .frame(width: 5, height: 5)
+                        .padding(2)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
 /// Centered status message, shown in the title bar.
 struct StatusPill: View {
     @ObservedObject var model: AppModel

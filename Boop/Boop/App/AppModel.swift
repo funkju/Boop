@@ -51,6 +51,75 @@ final class AppModel: ObservableObject {
         objectWillChange.send()
     }
 
+    // MARK: - Pages (in-memory only, by design — Boop stays disposable)
+
+    struct Page {
+        var text = ""
+        var languageID: String = CodeLanguage.default.id.rawValue
+        var autoDetected = false
+        var fileURL: URL?
+        var lastLoadedText = ""
+    }
+
+    @Published private(set) var pages: [Page] = [Page()]
+    @Published private(set) var currentPageIndex = 0
+
+    func newPage() {
+        snapshotCurrentPage()
+        pages.append(Page())
+        loadPage(at: pages.count - 1)
+    }
+
+    func closeCurrentPage() {
+        pages.remove(at: currentPageIndex)
+        if pages.isEmpty {
+            pages = [Page()]
+        }
+        loadPage(at: min(currentPageIndex, pages.count - 1))
+    }
+
+    func goToPage(_ index: Int) {
+        guard pages.indices.contains(index), index != currentPageIndex else { return }
+        snapshotCurrentPage()
+        loadPage(at: index)
+    }
+
+    func nextPage() {
+        guard pages.count > 1 else { return }
+        snapshotCurrentPage()
+        loadPage(at: (currentPageIndex + 1) % pages.count)
+    }
+
+    func previousPage() {
+        guard pages.count > 1 else { return }
+        snapshotCurrentPage()
+        loadPage(at: (currentPageIndex - 1 + pages.count) % pages.count)
+    }
+
+    private func snapshotCurrentPage() {
+        guard pages.indices.contains(currentPageIndex) else { return }
+        pages[currentPageIndex] = Page(
+            text: editor.textStorage.string,
+            languageID: languageID,
+            autoDetected: languageWasAutoDetected,
+            fileURL: openedFileURL,
+            lastLoadedText: lastLoadedText
+        )
+    }
+
+    private func loadPage(at index: Int) {
+        hidePreview()
+        currentPageIndex = index
+        let page = pages[index]
+        setEditorText(page.text)
+        languageID = page.languageID
+        languageWasAutoDetected = page.autoDetected
+        openedFileURL = page.fileURL
+        lastLoadedText = page.lastLoadedText
+        watchOpenedFile()
+        objectWillChange.send()
+    }
+
     // MARK: - Opened file
 
     @Published private(set) var openedFileURL: URL?
@@ -198,6 +267,14 @@ final class AppModel: ObservableObject {
     func open(url: URL) {
         do {
             let text = try String(contentsOf: url, encoding: .utf8)
+
+            // Don't clobber scratch content — files land on a fresh page.
+            if !editor.textStorage.string.isEmpty {
+                snapshotCurrentPage()
+                pages.append(Page())
+                loadPage(at: pages.count - 1)
+            }
+
             setEditorText(text)
             lastLoadedText = text
             openedFileURL = url

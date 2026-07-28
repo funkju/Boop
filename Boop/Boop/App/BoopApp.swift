@@ -47,6 +47,29 @@ struct BoopApp: App {
                 }
                 .keyboardShortcut("p", modifiers: [.command, .shift])
             }
+            CommandMenu("Pages") {
+                Button("New Page") {
+                    model.newPage()
+                }
+                .keyboardShortcut("n", modifiers: .command)
+
+                Button("Close Page") {
+                    model.closeCurrentPage()
+                }
+                .keyboardShortcut("w", modifiers: [.command, .shift])
+
+                Divider()
+
+                Button("Next Page") {
+                    model.nextPage()
+                }
+                .keyboardShortcut("]", modifiers: [.command, .shift])
+
+                Button("Previous Page") {
+                    model.previousPage()
+                }
+                .keyboardShortcut("[", modifiers: [.command, .shift])
+            }
             CommandMenu("Scripts") {
                 Button(model.paletteVisible ? "Close Script Picker" : "Open Script Picker") {
                     model.togglePalette()
