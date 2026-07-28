@@ -8,6 +8,7 @@
 import AppKit
 import SwiftUI
 import CodeEditLanguages
+import UniformTypeIdentifiers
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -19,6 +20,13 @@ final class AppModel: ObservableObject {
 
     @Published var paletteVisible = false
     @Published private(set) var status: Status = .normal
+
+    // MARK: - Markdown preview
+
+    @Published private(set) var previewVisible = false
+    /// Snapshot of the document taken when the preview opens; the editor
+    /// stays alive underneath, hidden by the preview's solid background.
+    @Published private(set) var previewText = ""
 
     // MARK: - Settings
 
@@ -100,10 +108,65 @@ final class AppModel: ObservableObject {
         editor.focus()
     }
 
+    func togglePreview() {
+        if previewVisible {
+            hidePreview()
+        } else {
+            showPreview()
+        }
+    }
+
+    func showPreview() {
+        previewText = editor.textStorage.string
+        previewVisible = true
+        setStatus(.help("Markdown preview — ⇧⌘P to edit"))
+        editor.blur()
+    }
+
+    func hidePreview() {
+        guard previewVisible else { return }
+        previewVisible = false
+        setStatus(.normal)
+        editor.focus()
+    }
+
+    // MARK: - File opening
+
+    func openFile() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.text]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        open(url: url)
+    }
+
+    func open(url: URL) {
+        do {
+            let text = try String(contentsOf: url, encoding: .utf8)
+            let storage = editor.textStorage
+            storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
+
+            let detected = CodeLanguage.detectLanguageFrom(url: url)
+            language = detected
+
+            if detected.id == .markdown {
+                showPreview()
+            } else {
+                hidePreview()
+                setStatus(.info("Opened \(url.lastPathComponent)"))
+            }
+        } catch {
+            setStatus(.error("Could not open \(url.lastPathComponent)"))
+        }
+    }
+
     func run(_ script: Script) {
         hidePalette()
         guard let textView = editor.textView else { return }
         scriptManager.runScript(script, in: textView)
+        if previewVisible {
+            previewText = editor.textStorage.string
+        }
     }
 
     func runLastScriptAgain() {

@@ -51,6 +51,12 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
 
+            if model.previewVisible {
+                MarkdownPreviewView(text: model.previewText)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+
             if model.paletteVisible {
                 Color.black.opacity(0.25)
                     .ignoresSafeArea()
@@ -64,6 +70,7 @@ struct ContentView: View {
             }
         }
         .animation(.spring(duration: 0.2), value: model.paletteVisible)
+        .animation(.easeOut(duration: 0.15), value: model.previewVisible)
         // Real toolbar items so macOS itself lines them up with the
         // traffic lights; the toolbar chrome stays hidden.
         .toolbar {
@@ -71,6 +78,10 @@ struct ContentView: View {
             // Liquid Glass capsules around toolbar items — bare text only.
             ToolbarItem(placement: .principal) {
                 StatusPill(model: model)
+            }
+            .sharedBackgroundVisibility(.hidden)
+            ToolbarItem(placement: .primaryAction) {
+                PreviewToggle(model: model)
             }
             .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .primaryAction) {

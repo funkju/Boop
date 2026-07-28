@@ -49,6 +49,31 @@ struct StatusPill: View {
     }
 }
 
+/// Faint markdown-preview toggle sitting next to the language selector.
+struct PreviewToggle: View {
+    @ObservedObject var model: AppModel
+
+    @State private var hovering = false
+
+    var body: some View {
+        Button {
+            model.togglePreview()
+        } label: {
+            Image(systemName: model.previewVisible ? "doc.plaintext" : "doc.richtext")
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+        .opacity(hovering ? 1 : (model.previewVisible ? 0.6 : 0.25))
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.15), value: hovering)
+        .help(model.previewVisible ? "Back to editor (⇧⌘P)" : "Markdown preview (⇧⌘P)")
+    }
+}
+
 /// Almost invisible language selector for the title bar's trailing edge.
 struct LanguageMenu: View {
     @ObservedObject var model: AppModel

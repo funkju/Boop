@@ -32,6 +32,7 @@
 		5E89DDE74739C7F7C81CEB78 /* TopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10C89161A95A51846E3EBCA /* TopBarView.swift */; };
 		8AB9AD743C158064BC008C3A /* SearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 038D86D5061FA6AED14A7F7D /* SearchTests.swift */; };
 		8DF359590CF30F90D0483DC6 /* BoopTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29A1F7A7365DCCF0E679927 /* BoopTheme.swift */; };
+		9AB37FF5F127F6309D697A30 /* MarkdownPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58DE153FDC3ECD9F6C034750 /* MarkdownPreviewView.swift */; };
 		A1CB50A3178153C96B9CB933 /* Fuse in Frameworks */ = {isa = PBXBuildFile; productRef = 5D28CAEB9F5D746313041063 /* Fuse */; };
 		C44379DEDC201666DD635E50 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC0362642295C47FA0BD1FF /* Status.swift */; };
 		EC17E20AF63C5D2F2F497878 /* CodeEditSourceEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 15D33E2CEC7060877ECBEABE /* CodeEditSourceEditor */; };
@@ -82,6 +83,7 @@
 		2C9761D42214E11600AFF8CD /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		2C9761DB2214E45300AFF8CD /* ScriptManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScriptManager.swift; sourceTree = "<group>"; };
 		2C9761DE2214E46800AFF8CD /* Script.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Script.swift; sourceTree = "<group>"; };
+		58DE153FDC3ECD9F6C034750 /* MarkdownPreviewView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarkdownPreviewView.swift; sourceTree = "<group>"; };
 		80FDBE241A8DC9624197DC4E /* BoopApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoopApp.swift; sourceTree = "<group>"; };
 		9AC0362642295C47FA0BD1FF /* Status.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
 		A10C89161A95A51846E3EBCA /* TopBarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopBarView.swift; sourceTree = "<group>"; };
@@ -210,6 +212,7 @@
 				09AE0B83E1996FAB9A2449ED /* ScriptPaletteView.swift */,
 				A10C89161A95A51846E3EBCA /* TopBarView.swift */,
 				0F775F27CF78D8735F123DC1 /* SettingsView.swift */,
+				58DE153FDC3ECD9F6C034750 /* MarkdownPreviewView.swift */,
 			);
 			name = App;
 			path = App;
@@ -257,6 +260,7 @@
 			packageProductDependencies = (
 				2C8BE187249EBB3D00099B73 /* Fuse */,
 				AE7FAD08B967497E599D66DA /* CodeEditSourceEditor */,
+				E3097D88C02B8557AF43DD53 /* MarkdownUI */,
 			);
 			productName = Boop;
 			productReference = 2C20667221FD628E0082570E /* Boop.app */;
@@ -294,6 +298,7 @@
 			packageReferences = (
 				2C8BE186249EBB3D00099B73 /* XCRemoteSwiftPackageReference "fuse-swift" */,
 				1E738BE3D8BA6AF066801569 /* XCRemoteSwiftPackageReference "CodeEditSourceEditor" */,
+				C4CC3A284880D46440A7E659 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 			);
 			productRefGroup = 2C20667321FD628E0082570E /* Products */;
 			projectDirPath = "";
@@ -359,6 +364,7 @@
 				5E89DDE74739C7F7C81CEB78 /* TopBarView.swift in Sources */,
 				4DA63FD4FEF7210A649F9800 /* SettingsView.swift in Sources */,
 				F249507F612DC79E2C0CC145 /* Status.swift in Sources */,
+				9AB37FF5F127F6309D697A30 /* MarkdownPreviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -658,6 +664,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		C4CC3A284880D46440A7E659 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -680,6 +694,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1E738BE3D8BA6AF066801569 /* XCRemoteSwiftPackageReference "CodeEditSourceEditor" */;
 			productName = CodeEditSourceEditor;
+		};
+		E3097D88C02B8557AF43DD53 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C4CC3A284880D46440A7E659 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
