@@ -26,7 +26,9 @@ final class AppModel: ObservableObject {
     @AppStorage("editorWrapLines") var wrapLines: Bool = true
     @AppStorage("editorShowMinimap") var showMinimap: Bool = false
     @AppStorage("editorShowFoldingRibbon") var showFoldingRibbon: Bool = true
-    @AppStorage("editorLanguage") var languageID: String = CodeLanguage.json.id.rawValue
+    // Fresh key on purpose: earlier builds stored "json" under
+    // "editorLanguage"; documents should start as unobtrusive plain text.
+    @AppStorage("editorLanguageID") var languageID: String = CodeLanguage.default.id.rawValue
 
     var language: CodeLanguage {
         get { CodeLanguage.allLanguages.first { $0.id.rawValue == languageID } ?? .default }

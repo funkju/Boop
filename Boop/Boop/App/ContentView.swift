@@ -58,8 +58,9 @@ struct ContentView: View {
             }
         }
         .animation(.spring(duration: 0.2), value: model.paletteVisible)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            StatusBarView(model: model)
+        .overlay(alignment: .top) {
+            TopBarView(model: model)
+                .animation(.spring(duration: 0.25), value: model.status)
         }
         .containerBackground(.ultraThinMaterial, for: .window)
     }

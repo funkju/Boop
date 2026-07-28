@@ -29,7 +29,7 @@
 		4DA63FD4FEF7210A649F9800 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F775F27CF78D8735F123DC1 /* SettingsView.swift */; };
 		543B0CE9C3ADD064305D587D /* EditorCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C46EE9AD2CA07660D30A7F90 /* EditorCoordinator.swift */; };
 		5D356DD733192482ECC1E0DD /* ScriptPaletteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09AE0B83E1996FAB9A2449ED /* ScriptPaletteView.swift */; };
-		5E89DDE74739C7F7C81CEB78 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10C89161A95A51846E3EBCA /* StatusBarView.swift */; };
+		5E89DDE74739C7F7C81CEB78 /* TopBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10C89161A95A51846E3EBCA /* TopBarView.swift */; };
 		8AB9AD743C158064BC008C3A /* SearchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 038D86D5061FA6AED14A7F7D /* SearchTests.swift */; };
 		8DF359590CF30F90D0483DC6 /* BoopTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A29A1F7A7365DCCF0E679927 /* BoopTheme.swift */; };
 		A1CB50A3178153C96B9CB933 /* Fuse in Frameworks */ = {isa = PBXBuildFile; productRef = 5D28CAEB9F5D746313041063 /* Fuse */; };
@@ -84,7 +84,7 @@
 		2C9761DE2214E46800AFF8CD /* Script.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Script.swift; sourceTree = "<group>"; };
 		80FDBE241A8DC9624197DC4E /* BoopApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoopApp.swift; sourceTree = "<group>"; };
 		9AC0362642295C47FA0BD1FF /* Status.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
-		A10C89161A95A51846E3EBCA /* StatusBarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
+		A10C89161A95A51846E3EBCA /* TopBarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopBarView.swift; sourceTree = "<group>"; };
 		A29A1F7A7365DCCF0E679927 /* BoopTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoopTheme.swift; sourceTree = "<group>"; };
 		C46EE9AD2CA07660D30A7F90 /* EditorCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -208,7 +208,7 @@
 				A29A1F7A7365DCCF0E679927 /* BoopTheme.swift */,
 				15B61E2B692A4BC75E8B4DF4 /* ContentView.swift */,
 				09AE0B83E1996FAB9A2449ED /* ScriptPaletteView.swift */,
-				A10C89161A95A51846E3EBCA /* StatusBarView.swift */,
+				A10C89161A95A51846E3EBCA /* TopBarView.swift */,
 				0F775F27CF78D8735F123DC1 /* SettingsView.swift */,
 			);
 			name = App;
@@ -356,7 +356,7 @@
 				8DF359590CF30F90D0483DC6 /* BoopTheme.swift in Sources */,
 				33A24C367FC7DA837B9185F5 /* ContentView.swift in Sources */,
 				5D356DD733192482ECC1E0DD /* ScriptPaletteView.swift in Sources */,
-				5E89DDE74739C7F7C81CEB78 /* StatusBarView.swift in Sources */,
+				5E89DDE74739C7F7C81CEB78 /* TopBarView.swift in Sources */,
 				4DA63FD4FEF7210A649F9800 /* SettingsView.swift in Sources */,
 				F249507F612DC79E2C0CC145 /* Status.swift in Sources */,
 			);

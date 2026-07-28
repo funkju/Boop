@@ -32,7 +32,7 @@ struct SettingsView: View {
 
             Picker("Default language", selection: model.$languageID) {
                 ForEach(CodeLanguage.allLanguages, id: \.id.rawValue) { lang in
-                    Text(lang.id.rawValue.capitalized).tag(lang.id.rawValue)
+                    Text(lang.tsName).tag(lang.id.rawValue)
                 }
             }
         }
