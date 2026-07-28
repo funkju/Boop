@@ -6,128 +6,121 @@
 //  Copyright © 2017 OKatBest. All rights reserved.
 //
 
-import Cocoa
-import SavannaKit
+import AppKit
 import Fuse
+import CodeEditTextView
 
+class ScriptManager: ObservableObject {
 
-class ScriptManager: NSObject {
-    
-    
-    
     static let userPreferencesPathKey = "scriptsFolderPath"
     static let userPreferencesDataKey = "scriptsFolderData"
-    
-    // This probably does not belong here.
-    @IBOutlet weak var statusView: StatusView!
-    
+
+    /// Reports script status (errors, info, reload confirmations) to the UI.
+    var onStatus: ((Status) -> Void)?
+
     let fuse = Fuse(threshold: 0.2)
-    var scripts = [Script]()
-    
+    @Published private(set) var scripts = [Script]()
+
     let currentAPIVersion = 1.0
-    
+
     var lastScript: Script?
-    
-    override init() {
-        super.init()
-        
+
+    init() {
         loadDefaultScripts()
         loadUserScripts()
     }
-    
 
     static func setBookmarkData(url: URL) throws {
-        
+
         let data = try url.bookmarkData(options: NSURL.BookmarkCreationOptions.withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
-        
+
         UserDefaults.standard.set(data, forKey: ScriptManager.userPreferencesDataKey)
     }
-    
+
     /// Load built in scripts
     func loadDefaultScripts(){
         let urls = Bundle.main.urls(forResourcesWithExtension: "js", subdirectory: "scripts")
-        
+
         urls?.forEach { script in
             loadScript(url: script, builtIn: true)
         }
     }
-    
-    
+
     /// Load user scripts
     func loadUserScripts(){
-        
+
         do {
-            
+
             guard let url = try ScriptManager.getBookmarkURL() else {
                 return
             }
-            
+
             let urls = try FileManager.default.contentsOfDirectory(at: url, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
-            
+
             urls.forEach { url in
                 guard url.path.hasSuffix(".js") else {
                     return
                 }
                 loadScript(url: url, builtIn: false)
             }
-            
+
         }
         catch let error {
             print(error)
             return
         }
     }
-    
+
     /// Parses a script file
     private func loadScript(url: URL, builtIn: Bool){
         do{
             let script = try String(contentsOf: url)
-            
+
             // This is inspired by the ISF file format by Vidvox
             // Thanks to them for the idea and their awesome work
-            
+
             guard
                 let openComment = script.range(of: "/**"),
                 let closeComment = script.range(of: "**/")
                 else {
                     throw NSError()
             }
-            
+
             let meta = script[openComment.upperBound..<closeComment.lowerBound]
-            
+
             let json = try JSONSerialization.jsonObject(with: meta.data(using: .utf8)!, options: .allowFragments) as! [String: Any]
-            
+
             let scriptObject = Script(url: url, script: script, parameters: json, builtIn: builtIn, delegate: self)
-            
+
             scripts.append(scriptObject)
-            
-            
+
+
         } catch {
             print("Unable to load ", url)
         }
     }
-    
+
     func search(_ query: String) -> [Script] {
-        
-        
+
+
         guard query.count < 20 else {
             // If the query is too long let's just ignore it.
             // It's probably the user pasting the wrong thing
             // in the search box by accident which overwhelms
             // fuse and crashes the app. Whoops!
-            
+
             return []
         }
-        
+
         guard query != "*" else {
-            
+
             return scripts.sorted { left, right in
                 left.name ?? "" < right.name ?? ""
             }
         }
-        
+
         let results = fuse.search(query, in: scripts)
-        
+
         return results.filter { result in
             result.score < 0.4 // Filter low quality results
         }.sorted { left, right in
@@ -138,122 +131,88 @@ class ScriptManager: NSObject {
             scripts[result.index]
         }
     }
-    
-    func runScript(_ script: Script, into editor: SyntaxTextView) {
-        
-        let fullText = editor.text
-        
+
+    func runScript(_ script: Script, in textView: TextView) {
+
+        let fullText = textView.string
+
         lastScript = script
-        
-        guard let ranges = editor.contentTextView.selectedRanges as? [NSRange], ranges.reduce(0, { $0 + $1.length }) > 0 else {
-            
-            let insertPosition = (editor.contentTextView.selectedRanges.first as? NSRange)?.location
-            let result = runScript(script, fullText: fullText, insertIndex: insertPosition)
+
+        let selectedRanges = textView.selectionManager.textSelections
+            .map(\.range)
+            .filter { $0.length > 0 }
+
+        guard !selectedRanges.isEmpty else {
+
             // No selection, run on full text
-            
-            let unicodeSafeFullTextLength = editor.contentTextView.textStorage?.length ?? fullText.count
-            replaceText(ranges: [NSRange(location: 0, length: unicodeSafeFullTextLength)], values: [result], editor: editor)
-            
+
+            let insertPosition = textView.selectionManager.textSelections.first?.range.location
+            let result = runScript(script, fullText: fullText, insertIndex: insertPosition)
+
+            textView.undoManager?.beginUndoGrouping()
+            textView.replaceCharacters(in: textView.documentRange, with: result)
+            textView.undoManager?.endUndoGrouping()
+
             return
         }
-        
+
         // Fun fact: You can have multi selections! Which means we need to disable
         // the ability to edit `fullText` while in selection mode, otherwise the
         // some scripts may accidentally run multiple time over the full text.
-        
-        let values = ranges.map {
-            range -> String in
-            
-            let value = (fullText as NSString).substring(with: range)
-            
-            return runScript(script, selection: value, fullText: fullText)
-            
+        //
+        // Replacements are applied back-to-front so earlier ranges keep their
+        // positions as the text shifts.
+
+        let pairs = selectedRanges
+            .map { range -> (NSRange, String) in
+                let value = (fullText as NSString).substring(with: range)
+                return (range, runScript(script, selection: value, fullText: fullText))
+            }
+            .sorted { $0.0.location > $1.0.location }
+
+        textView.undoManager?.beginUndoGrouping()
+        pairs.forEach { (range, value) in
+            textView.replaceCharacters(in: range, with: value)
         }
-        
-        replaceText(ranges: ranges, values: values, editor: editor)
-        
-        
+        textView.undoManager?.endUndoGrouping()
     }
-    
-    private func replaceText(ranges: [NSRange], values: [String], editor: SyntaxTextView) {
-        
-        
-        let textView = editor.contentTextView
-        
-        // Since we have to replace each selection one by one, after each
-        // occurence the whole text shifts around a bit, and therefore the
-        // Ranges don't match their original position anymore. So we have
-        // to offset everything based on the previous replacements deltas.
-        // This is pretty straightforward because we know selections can't
-        // overlap, and we sort them so they are always in order.
-        
-        var offset = 0
-        let pairs = zip(ranges, values)
-            .sorted{ $0.0.location < $1.0.location }
-            .map { (pair) -> (NSRange, String) in
-                
-                let (range, value) = pair
-                let length = range.length
-                let newRange = NSRange(location: range.location + offset, length: length)
-                
-                offset += value.count - length
-                return (newRange, value)
-        }
-        
-        
-        guard textView.shouldChangeText(inRanges: ranges as [NSValue], replacementStrings: values) else {
-            return
-        }
-        
-        textView.textStorage?.beginEditing()
-        
-        pairs.forEach {
-            (range, value) in
-            textView.textStorage?.replaceCharacters(in: range, with: value)
-        }
-        
-        
-        textView.textStorage?.endEditing()
-        
-        textView.didChangeText()
-    }
-    
+
     func runScript(_ script: Script, selection: String? = nil, fullText: String, insertIndex: Int? = nil) -> String {
         let scriptExecution = ScriptExecution(selection: selection, fullText: fullText, script: script, insertIndex: insertIndex)
-        
-        self.statusView.setStatus(.normal)
+
+        onStatus?(.normal)
         script.run(with: scriptExecution)
-        
+
         return scriptExecution.text ?? ""
     }
-    
-    func runScriptAgain(editor: SyntaxTextView) {
+
+    func runScriptAgain(in textView: TextView) {
         guard let script = lastScript else {
             NSSound.beep()
             return
         }
-        
-        runScript(script, into: editor)
+
+        runScript(script, in: textView)
     }
-    
+
     func reloadScripts() {
         lastScript = nil
         scripts.removeAll()
         loadDefaultScripts()
         loadUserScripts()
-        
-        statusView.setStatus(.success("Reloaded Scripts"))
+
+        onStatus?(.success("Reloaded Scripts"))
     }
-    
+
     static func getBookmarkURL() throws -> URL? {
-        
+
         guard let data = UserDefaults.standard.data(forKey: ScriptManager.userPreferencesDataKey) else {
             // No user path specified, abbandon ship!
             return nil
         }
-        
+
         var isBookmarkStale = false
-                  
+
         let url = try URL.init(resolvingBookmarkData: data, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isBookmarkStale)
 
         if(isBookmarkStale) {
@@ -263,20 +222,19 @@ class ScriptManager: NSObject {
         guard url.startAccessingSecurityScopedResource() else {
             return nil
         }
-        
+
         return url
     }
-    
+
 }
 
 extension ScriptManager: ScriptDelegate {
     func onScriptError(message: String) {
-        self.statusView.setStatus(.error(message))
+        onStatus?(.error(message))
     }
-    
+
     func onScriptInfo(message: String) {
-        self.statusView.setStatus(.info(message))
+        onStatus?(.info(message))
     }
-    
-    
+
 }
