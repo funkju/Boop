@@ -63,24 +63,35 @@ final class AppModel: ObservableObject {
     private var detectionTask: Task<Void, Never>?
     private var languageWasAutoDetected = false
 
-    private func scheduleMarkdownDetection() {
+    private func scheduleContentDetection() {
         detectionTask?.cancel()
         detectionTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(300))
             guard let self, !Task.isCancelled else { return }
-            self.detectMarkdown()
+            self.detectContentLanguage()
         }
     }
 
-    private func detectMarkdown() {
+    private func detectContentLanguage() {
         let sample = String(editor.textStorage.string.prefix(16_384))
-        if language.id == .plainText, MarkdownDetector.looksLikeMarkdown(sample) {
-            language = .markdown
-            languageWasAutoDetected = true
-        } else if languageWasAutoDetected, language.id == .markdown,
-                  !MarkdownDetector.looksLikeMarkdown(sample) {
-            language = .default
-            languageWasAutoDetected = false
+        let detected = ContentDetector.detect(sample)
+
+        if language.id == .plainText {
+            if let detected {
+                language = detected
+                languageWasAutoDetected = true
+            }
+        } else if languageWasAutoDetected {
+            // Follow the content: switch if it now reads as a different
+            // language, fall back to plain text if the signals are gone.
+            if let detected {
+                if detected.id != language.id {
+                    language = detected
+                }
+            } else {
+                language = .default
+                languageWasAutoDetected = false
+            }
         }
     }
 
@@ -131,7 +142,7 @@ final class AppModel: ObservableObject {
             self?.setStatus(status)
         }
         editor.onTextChange = { [weak self] in
-            self?.scheduleMarkdownDetection()
+            self?.scheduleContentDetection()
         }
     }
 

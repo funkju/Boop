@@ -38,8 +38,11 @@
 		A1CB50A3178153C96B9CB933 /* Fuse in Frameworks */ = {isa = PBXBuildFile; productRef = 5D28CAEB9F5D746313041063 /* Fuse */; };
 		A732188D162FD16DDEE77E90 /* MarkdownDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B1A98FCCC43F7E21A368ED /* MarkdownDetectorTests.swift */; };
 		C44379DEDC201666DD635E50 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC0362642295C47FA0BD1FF /* Status.swift */; };
+		D125D11FA4A64952F3F378F1 /* ContentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD6A5B0C47EC2622A63C8A46 /* ContentDetector.swift */; };
+		E8BD0BEA3B05A7303B2D2DE1 /* ContentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD6A5B0C47EC2622A63C8A46 /* ContentDetector.swift */; };
 		EC17E20AF63C5D2F2F497878 /* CodeEditSourceEditor in Frameworks */ = {isa = PBXBuildFile; productRef = 15D33E2CEC7060877ECBEABE /* CodeEditSourceEditor */; };
 		F249507F612DC79E2C0CC145 /* Status.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC0362642295C47FA0BD1FF /* Status.swift */; };
+		FD7064FC8A887FBDD21D01A7 /* ContentDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BFCFD65D9464EE2D97A5D8E /* ContentDetectorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -87,11 +90,13 @@
 		2C9761D42214E11600AFF8CD /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; path = scripts; sourceTree = "<group>"; };
 		2C9761DB2214E45300AFF8CD /* ScriptManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ScriptManager.swift; sourceTree = "<group>"; };
 		2C9761DE2214E46800AFF8CD /* Script.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Script.swift; sourceTree = "<group>"; };
+		3BFCFD65D9464EE2D97A5D8E /* ContentDetectorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentDetectorTests.swift; sourceTree = "<group>"; };
 		58DE153FDC3ECD9F6C034750 /* MarkdownPreviewView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarkdownPreviewView.swift; sourceTree = "<group>"; };
 		80FDBE241A8DC9624197DC4E /* BoopApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoopApp.swift; sourceTree = "<group>"; };
 		9AC0362642295C47FA0BD1FF /* Status.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Status.swift; sourceTree = "<group>"; };
 		A10C89161A95A51846E3EBCA /* TopBarView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TopBarView.swift; sourceTree = "<group>"; };
 		A29A1F7A7365DCCF0E679927 /* BoopTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoopTheme.swift; sourceTree = "<group>"; };
+		BD6A5B0C47EC2622A63C8A46 /* ContentDetector.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ContentDetector.swift; sourceTree = "<group>"; };
 		C46EE9AD2CA07660D30A7F90 /* EditorCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EditorCoordinator.swift; sourceTree = "<group>"; };
 		E7B1A98FCCC43F7E21A368ED /* MarkdownDetectorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MarkdownDetectorTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -126,6 +131,7 @@
 				2C17C67124271EBD005C911C /* ScriptManagerTests.swift */,
 				038D86D5061FA6AED14A7F7D /* SearchTests.swift */,
 				E7B1A98FCCC43F7E21A368ED /* MarkdownDetectorTests.swift */,
+				3BFCFD65D9464EE2D97A5D8E /* ContentDetectorTests.swift */,
 			);
 			path = BoopTests;
 			sourceTree = "<group>";
@@ -186,6 +192,7 @@
 				2C9761DB2214E45300AFF8CD /* ScriptManager.swift */,
 				9AC0362642295C47FA0BD1FF /* Status.swift */,
 				1B0572DAEC40E76F5DC31FB9 /* MarkdownDetector.swift */,
+				BD6A5B0C47EC2622A63C8A46 /* ContentDetector.swift */,
 			);
 			path = System;
 			sourceTree = "<group>";
@@ -352,6 +359,8 @@
 				8AB9AD743C158064BC008C3A /* SearchTests.swift in Sources */,
 				61306FD4886A095DA353374E /* MarkdownDetector.swift in Sources */,
 				A732188D162FD16DDEE77E90 /* MarkdownDetectorTests.swift in Sources */,
+				D125D11FA4A64952F3F378F1 /* ContentDetector.swift in Sources */,
+				FD7064FC8A887FBDD21D01A7 /* ContentDetectorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -375,6 +384,7 @@
 				F249507F612DC79E2C0CC145 /* Status.swift in Sources */,
 				9AB37FF5F127F6309D697A30 /* MarkdownPreviewView.swift in Sources */,
 				0F0E43C6D42655B81890F6D3 /* MarkdownDetector.swift in Sources */,
+				E8BD0BEA3B05A7303B2D2DE1 /* ContentDetector.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
