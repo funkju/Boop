@@ -12,9 +12,14 @@ struct ScriptPaletteView: View {
     @ObservedObject var model: AppModel
 
     @State private var query = ""
-    @State private var results: [Script] = []
     @State private var selectedIndex = 0
     @FocusState private var searchFocused: Bool
+
+    /// Derived, never stored: the visible rows can't drift out of sync with
+    /// the query text.
+    private var results: [Script] {
+        model.scriptManager.search(query)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,7 +41,6 @@ struct ScriptPaletteView: View {
                         LazyVStack(spacing: 2) {
                             ForEach(Array(results.enumerated()), id: \.element) { index, script in
                                 ScriptRowView(script: script, isSelected: index == selectedIndex)
-                                    .id(index)
                                     .onTapGesture { model.run(script) }
                             }
                         }
@@ -44,7 +48,10 @@ struct ScriptPaletteView: View {
                     }
                     .frame(maxHeight: 300)
                     .onChange(of: selectedIndex) {
-                        proxy.scrollTo(selectedIndex)
+                        let current = results
+                        if current.indices.contains(selectedIndex) {
+                            proxy.scrollTo(current[selectedIndex])
+                        }
                     }
                 }
             }
@@ -53,7 +60,6 @@ struct ScriptPaletteView: View {
         .glassEffect(.regular, in: .rect(cornerRadius: 18))
         .onAppear {
             query = ""
-            results = []
             selectedIndex = 0
             // The editor's AppKit text view holds first responder until the
             // next runloop turn; focusing immediately gets silently dropped.
@@ -62,7 +68,6 @@ struct ScriptPaletteView: View {
             }
         }
         .onChange(of: query) {
-            results = model.scriptManager.search(query)
             selectedIndex = 0
         }
         .onKeyPress(.downArrow) {
