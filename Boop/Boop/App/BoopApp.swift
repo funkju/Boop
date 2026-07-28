@@ -14,7 +14,9 @@ struct BoopApp: App {
     var body: some Scene {
         Window("Boop", id: "main") {
             ContentView(model: model)
+                .preferredColorScheme(.dark)
         }
+        .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 900, height: 620)
         .commands {
             CommandMenu("Scripts") {

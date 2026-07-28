@@ -31,7 +31,9 @@ enum BoopTheme {
         text: .init(color: NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)),
         insertionPoint: greenish,
         invisibles: .init(color: NSColor(srgbRed: 0.35, green: 0.35, blue: 0.35, alpha: 1)),
-        background: NSColor(srgbRed: 31 / 255, green: 31 / 255, blue: 31 / 255, alpha: 1),
+        // Semi-transparent so the window's glass material shows through the
+        // editor, gutter, and minimap alike.
+        background: NSColor(srgbRed: 24 / 255, green: 24 / 255, blue: 28 / 255, alpha: 0.5),
         lineHighlight: NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.05),
         selection: NSColor(red: 0.19, green: 0.44, blue: 0.71, alpha: 1),
         keywords: .init(color: redey),
@@ -50,7 +52,7 @@ enum BoopTheme {
         text: .init(color: NSColor(srgbRed: 0.1, green: 0.1, blue: 0.1, alpha: 1)),
         insertionPoint: greenButDarker,
         invisibles: .init(color: NSColor(srgbRed: 0.75, green: 0.75, blue: 0.75, alpha: 1)),
-        background: NSColor(srgbRed: 0.95, green: 0.95, blue: 0.95, alpha: 1),
+        background: NSColor(srgbRed: 0.95, green: 0.95, blue: 0.95, alpha: 0.5),
         lineHighlight: NSColor(srgbRed: 0, green: 0, blue: 0, alpha: 0.04),
         selection: NSColor(red: 0.19, green: 0.44, blue: 0.71, alpha: 0.35),
         keywords: .init(color: redButDarker),

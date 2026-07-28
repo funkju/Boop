@@ -22,6 +22,11 @@ struct ContentView: View {
                 font: .monospacedSystemFont(ofSize: model.fontSize, weight: .regular),
                 wrapLines: model.wrapLines
             ),
+            layout: .init(
+                // Keep the first lines clear of the traffic lights now that
+                // the title bar is hidden.
+                contentInsets: NSEdgeInsets(top: 34, left: 0, bottom: 0, right: 0)
+            ),
             peripherals: .init(
                 showMinimap: model.showMinimap,
                 showFoldingRibbon: model.showFoldingRibbon
@@ -56,5 +61,6 @@ struct ContentView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             StatusBarView(model: model)
         }
+        .containerBackground(.ultraThinMaterial, for: .window)
     }
 }
