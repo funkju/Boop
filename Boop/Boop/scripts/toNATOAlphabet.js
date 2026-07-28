@@ -5,7 +5,7 @@
     "description":"Outputs the provided string, substituting letters for the code words from the NATO phonetic alphabet",
     "author":"funkju",
     "icon":"globe",
-    "tags":"rgb,hex,convert,color"
+    "tags":"nato,phonetic,alphabet,convert"
   }
 **/
 const toNato = (str = '') => {
