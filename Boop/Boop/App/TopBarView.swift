@@ -88,7 +88,7 @@ struct LanguageMenu: View {
     private var languageBinding: Binding<String> {
         Binding(
             get: { model.languageID },
-            set: { model.languageID = $0; model.objectWillChange.send() }
+            set: { model.userPickedLanguage($0) }
         )
     }
 

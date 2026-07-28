@@ -35,6 +35,11 @@ struct BoopApp: App {
                     model.openFile()
                 }
                 .keyboardShortcut("o", modifiers: .command)
+
+                Button("Save") {
+                    model.saveFile()
+                }
+                .keyboardShortcut("s", modifiers: .command)
             }
             CommandGroup(after: .toolbar) {
                 Button(model.previewVisible ? "Hide Markdown Preview" : "Show Markdown Preview") {

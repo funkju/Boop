@@ -18,6 +18,9 @@ final class EditorCoordinator: TextViewCoordinator {
 
     private(set) weak var controller: TextViewController?
 
+    /// Fired after every edit; AppModel uses it for markdown detection.
+    var onTextChange: (() -> Void)?
+
     var textView: TextView? {
         controller?.textView
     }
@@ -28,6 +31,10 @@ final class EditorCoordinator: TextViewCoordinator {
         // even a transparent color — which blocks the window's glass
         // material. Stop drawing; the tint lives in ContentView instead.
         controller.scrollView?.drawsBackground = false
+    }
+
+    func textViewDidChangeText(controller: TextViewController) {
+        onTextChange?()
     }
 
     func focus() {

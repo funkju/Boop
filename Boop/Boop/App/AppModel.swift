@@ -43,6 +43,47 @@ final class AppModel: ObservableObject {
         set { languageID = newValue.id.rawValue; objectWillChange.send() }
     }
 
+    /// Explicit menu picks stick; auto-detection only ever flips languages
+    /// it set itself.
+    func userPickedLanguage(_ id: String) {
+        languageID = id
+        languageWasAutoDetected = false
+        objectWillChange.send()
+    }
+
+    // MARK: - Opened file
+
+    @Published private(set) var openedFileURL: URL?
+    /// Contents at last load/save, for dirty-buffer checks on reload.
+    private var lastLoadedText = ""
+    private var fileWatcher: DispatchSourceFileSystemObject?
+
+    // MARK: - Markdown content detection
+
+    private var detectionTask: Task<Void, Never>?
+    private var languageWasAutoDetected = false
+
+    private func scheduleMarkdownDetection() {
+        detectionTask?.cancel()
+        detectionTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard let self, !Task.isCancelled else { return }
+            self.detectMarkdown()
+        }
+    }
+
+    private func detectMarkdown() {
+        let sample = String(editor.textStorage.string.prefix(16_384))
+        if language.id == .plainText, MarkdownDetector.looksLikeMarkdown(sample) {
+            language = .markdown
+            languageWasAutoDetected = true
+        } else if languageWasAutoDetected, language.id == .markdown,
+                  !MarkdownDetector.looksLikeMarkdown(sample) {
+            language = .default
+            languageWasAutoDetected = false
+        }
+    }
+
     // MARK: - Status queue
     //
     // Transient statuses (info/error/success) queue up and each display for a
@@ -88,6 +129,9 @@ final class AppModel: ObservableObject {
     private init() {
         scriptManager.onStatus = { [weak self] status in
             self?.setStatus(status)
+        }
+        editor.onTextChange = { [weak self] in
+            self?.scheduleMarkdownDetection()
         }
     }
 
@@ -143,11 +187,14 @@ final class AppModel: ObservableObject {
     func open(url: URL) {
         do {
             let text = try String(contentsOf: url, encoding: .utf8)
-            let storage = editor.textStorage
-            storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
+            setEditorText(text)
+            lastLoadedText = text
+            openedFileURL = url
+            watchOpenedFile()
 
             let detected = CodeLanguage.detectLanguageFrom(url: url)
             language = detected
+            languageWasAutoDetected = false
 
             if detected.id == .markdown {
                 showPreview()
@@ -158,6 +205,90 @@ final class AppModel: ObservableObject {
         } catch {
             setStatus(.error("Could not open \(url.lastPathComponent)"))
         }
+    }
+
+    func saveFile() {
+        if let url = openedFileURL {
+            write(to: url)
+        } else {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = language.id == .markdown ? "Untitled.md" : "Untitled.txt"
+            guard panel.runModal() == .OK, let url = panel.url else { return }
+            openedFileURL = url
+            write(to: url)
+            watchOpenedFile()
+        }
+    }
+
+    private func write(to url: URL) {
+        do {
+            let text = editor.textStorage.string
+            try text.write(to: url, atomically: true, encoding: .utf8)
+            lastLoadedText = text
+            setStatus(.success("Saved \(url.lastPathComponent)"))
+        } catch {
+            setStatus(.error("Could not save: \(error.localizedDescription)"))
+        }
+    }
+
+    private func watchOpenedFile() {
+        fileWatcher?.cancel()
+        fileWatcher = nil
+        guard let url = openedFileURL else { return }
+
+        let fd = Darwin.open(url.path, O_EVTONLY)
+        guard fd >= 0 else { return }
+
+        let source = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: fd,
+            eventMask: [.write, .extend, .rename, .delete],
+            queue: .main
+        )
+        source.setEventHandler { [weak self] in
+            guard let self else { return }
+            let events = self.fileWatcher?.data ?? []
+            if events.contains(.rename) || events.contains(.delete) {
+                // Most editors save atomically (write + rename), so give the
+                // new file a beat to land, then reload and re-arm the watch.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                    self?.reloadFromDisk()
+                    self?.watchOpenedFile()
+                }
+            } else {
+                self.reloadFromDisk()
+            }
+        }
+        source.setCancelHandler { close(fd) }
+        source.resume()
+        fileWatcher = source
+    }
+
+    private func reloadFromDisk() {
+        guard let url = openedFileURL,
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return }
+
+        // Our own save also trips the watcher; nothing to do.
+        guard text != editor.textStorage.string else {
+            lastLoadedText = text
+            return
+        }
+        // Never clobber edits that haven't been saved.
+        guard editor.textStorage.string == lastLoadedText else {
+            setStatus(.error("\(url.lastPathComponent) changed on disk — keeping your unsaved edits"))
+            return
+        }
+
+        setEditorText(text)
+        lastLoadedText = text
+        if previewVisible {
+            previewText = text
+        }
+        setStatus(.info("Reloaded \(url.lastPathComponent)"))
+    }
+
+    private func setEditorText(_ text: String) {
+        let storage = editor.textStorage
+        storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
     }
 
     func run(_ script: Script) {
@@ -181,5 +312,12 @@ final class AppModel: ObservableObject {
     func clearText() {
         guard let textView = editor.textView else { return }
         textView.replaceCharacters(in: textView.documentRange, with: "")
+        // A cleared buffer is a fresh scratch buffer — detach the file so a
+        // reflexive ⌘S can't empty something on disk.
+        openedFileURL = nil
+        fileWatcher?.cancel()
+        fileWatcher = nil
+        lastLoadedText = ""
+        hidePreview()
     }
 }
