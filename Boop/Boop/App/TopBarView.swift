@@ -38,7 +38,9 @@ struct TopBarView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.horizontal, 12)
-        .padding(.top, 7)
+        // Vertically center the ~20pt controls on the traffic lights,
+        // whose centers sit roughly 16pt below the window's top edge.
+        .frame(height: 32, alignment: .center)
     }
 
     // MARK: - Status (centered, like classic Boop's result messages)

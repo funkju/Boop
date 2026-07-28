@@ -58,6 +58,9 @@ struct ContentView: View {
             }
         }
         .animation(.spring(duration: 0.2), value: model.paletteVisible)
+        // Expand into the (hidden) title bar zone first, so the top strip
+        // overlays at true window top — level with the traffic lights.
+        .ignoresSafeArea(.container, edges: .top)
         .overlay(alignment: .top) {
             TopBarView(model: model)
                 .animation(.spring(duration: 0.25), value: model.status)
