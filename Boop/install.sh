@@ -17,5 +17,8 @@ osascript -e 'tell application "Boop" to quit' 2>/dev/null || true
 
 rm -rf "$DEST"
 ditto "$APP" "$DEST"
+
+# Deep re-sign ad-hoc so the app and its embedded frameworks agree.
+codesign --force --deep --sign - "$DEST"
 echo "Installed $DEST"
 open "$DEST"
