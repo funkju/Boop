@@ -61,13 +61,14 @@ struct PreviewToggle: View {
         } label: {
             Image(systemName: model.previewVisible ? "doc.plaintext" : "doc.richtext")
                 .font(.system(size: 10))
-                .foregroundStyle(.secondary)
+                // Blue as a "rendered view available here" beacon.
+                .foregroundStyle(.blue)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 3)
                 .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .opacity(hovering ? 1 : (model.previewVisible ? 0.6 : 0.25))
+        .opacity(hovering ? 1 : 0.85)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.15), value: hovering)
         .help(model.previewVisible ? "Back to editor (⇧⌘P)" : "Markdown preview (⇧⌘P)")

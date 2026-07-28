@@ -80,10 +80,14 @@ struct ContentView: View {
                 StatusPill(model: model)
             }
             .sharedBackgroundVisibility(.hidden)
-            ToolbarItem(placement: .primaryAction) {
-                PreviewToggle(model: model)
+            // Only offer the preview when the document is markdown (keep it
+            // reachable while previewing so you can always flip back).
+            if model.language.id == .markdown || model.previewVisible {
+                ToolbarItem(placement: .primaryAction) {
+                    PreviewToggle(model: model)
+                }
+                .sharedBackgroundVisibility(.hidden)
             }
-            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .primaryAction) {
                 LanguageMenu(model: model)
             }
