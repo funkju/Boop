@@ -375,8 +375,18 @@ final class AppModel: ObservableObject {
     }
 
     private func setEditorText(_ text: String) {
-        let storage = editor.textStorage
-        storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
+        // Must go through TextView so CodeEdit's undo manager sees the
+        // mutation — editing the storage directly desyncs it and the next
+        // keystroke hits an assertion in inverseMutation(for:).
+        if let textView = editor.textView {
+            textView.replaceCharacters(in: textView.documentRange, with: text)
+            // A page/file swap is a new document; undoing across it would
+            // resurrect the previous buffer's text into this one.
+            textView._undoManager?.clearStack()
+        } else {
+            let storage = editor.textStorage
+            storage.replaceCharacters(in: NSRange(location: 0, length: storage.length), with: text)
+        }
     }
 
     func run(_ script: Script) {
