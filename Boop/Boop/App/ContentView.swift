@@ -36,6 +36,12 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            // The editor's scroll view no longer draws its own background
+            // (see EditorCoordinator), so this tint sits between the window's
+            // glass material and the text.
+            Color(nsColor: (colorScheme == .dark ? BoopTheme.dark : BoopTheme.light).background)
+                .ignoresSafeArea()
+
             SourceEditor(
                 model.editor.textStorage,
                 language: model.language,

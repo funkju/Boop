@@ -24,6 +24,10 @@ final class EditorCoordinator: TextViewCoordinator {
 
     func prepareCoordinator(controller: TextViewController) {
         self.controller = controller
+        // NSClipView reports itself opaque whenever it draws a background —
+        // even a transparent color — which blocks the window's glass
+        // material. Stop drawing; the tint lives in ContentView instead.
+        controller.scrollView?.drawsBackground = false
     }
 
     func focus() {
