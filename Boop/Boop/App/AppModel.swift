@@ -34,9 +34,10 @@ final class AppModel: ObservableObject {
     @AppStorage("editorWrapLines") var wrapLines: Bool = true
     @AppStorage("editorShowMinimap") var showMinimap: Bool = false
     @AppStorage("editorShowFoldingRibbon") var showFoldingRibbon: Bool = true
-    // Fresh key on purpose: earlier builds stored "json" under
-    // "editorLanguage"; documents should start as unobtrusive plain text.
-    @AppStorage("editorLanguageID") var languageID: String = CodeLanguage.default.id.rawValue
+    // Deliberately NOT persisted: the buffer is disposable and starts empty,
+    // so the language must too. Persisting it once left an auto-detected
+    // "json" stuck across relaunches, blocking detection on new content.
+    @Published var languageID: String = CodeLanguage.default.id.rawValue
 
     var language: CodeLanguage {
         get { CodeLanguage.allLanguages.first { $0.id.rawValue == languageID } ?? .default }
@@ -410,8 +411,10 @@ final class AppModel: ObservableObject {
     func clearText() {
         guard let textView = editor.textView else { return }
         textView.replaceCharacters(in: textView.documentRange, with: "")
-        // A cleared buffer is a fresh scratch buffer — detach the file so a
-        // reflexive ⌘S can't empty something on disk.
+        // A cleared buffer is a fresh scratch buffer — back to plain text,
+        // and detach the file so a reflexive ⌘S can't empty something on disk.
+        languageID = CodeLanguage.default.id.rawValue
+        languageWasAutoDetected = false
         openedFileURL = nil
         fileWatcher?.cancel()
         fileWatcher = nil

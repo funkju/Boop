@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import CodeEditLanguages
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
@@ -29,12 +28,6 @@ struct SettingsView: View {
             Toggle("Wrap lines", isOn: model.$wrapLines)
             Toggle("Show minimap", isOn: model.$showMinimap)
             Toggle("Show code folding ribbon", isOn: model.$showFoldingRibbon)
-
-            Picker("Default language", selection: model.$languageID) {
-                ForEach(CodeLanguage.allLanguages, id: \.id.rawValue) { lang in
-                    Text(lang.tsName).tag(lang.id.rawValue)
-                }
-            }
         }
         .padding(20)
     }
