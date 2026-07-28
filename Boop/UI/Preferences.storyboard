@@ -32,7 +32,7 @@
             <objects>
                 <tabViewController selectedTabViewItemIndex="0" tabStyle="toolbar" id="YGr-Uf-ZBE" customClass="PreferencesTabViewController" customModule="Boop" customModuleProvider="target" sceneMemberID="viewController">
                     <tabViewItems>
-                        <tabViewItem label="Scripts" identifier="" image="text.and.command.macwindow" catalog="system" id="drV-oE-7k3"/>
+                        <tabViewItem label="Scripts" identifier="" image="text.and.command.interface.window" catalog="system" id="drV-oE-7k3"/>
                         <tabViewItem label="Colors" image="paintpalette" catalog="system" id="OgA-dF-Ylu"/>
                     </tabViewItems>
                     <tabView key="tabView" type="noTabsNoBorder" id="nRh-fE-4La">
@@ -293,6 +293,6 @@
     </scenes>
     <resources>
         <image name="paintpalette" catalog="system" width="18" height="15"/>
-        <image name="text.and.command.macwindow" catalog="system" width="18" height="14"/>
+        <image name="text.and.command.interface.window" catalog="system" width="18" height="14"/>
     </resources>
 </document>
