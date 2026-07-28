@@ -67,12 +67,16 @@ struct ContentView: View {
         // Real toolbar items so macOS itself lines them up with the
         // traffic lights; the toolbar chrome stays hidden.
         .toolbar {
+            // sharedBackgroundVisibility(.hidden) opts out of the automatic
+            // Liquid Glass capsules around toolbar items — bare text only.
             ToolbarItem(placement: .principal) {
                 StatusPill(model: model)
             }
+            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .primaryAction) {
                 LanguageMenu(model: model)
             }
+            .sharedBackgroundVisibility(.hidden)
         }
         .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
         .containerBackground(.ultraThinMaterial, for: .window)

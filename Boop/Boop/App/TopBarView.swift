@@ -36,9 +36,6 @@ struct StatusPill: View {
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundStyle(statusColor)
                     .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .glassEffect(.regular, in: .capsule)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
                 Text(model.status.message)
