@@ -51,8 +51,13 @@ enum ContentDetector {
         if text.contains("<?php") || text.contains("<?=") { return true }
 
         var score = 0
+        // Bare $var usage is weak on its own (shell has it too — the cap
+        // keeps a script full of "$HOME"s under the threshold), but it
+        // tips genuinely PHP-shaped snippets over the line.
+        score += min(countMatches(text, #"\$[A-Za-z_]\w*"#), 4)
         score += min(countMatches(text, #"\$[A-Za-z_]\w*\s*="#), 3) * 2      // $var = …
         score += min(countMatches(text, #"\$[A-Za-z_]\w*->"#), 3) * 2        // $obj->prop
+        score += min(countMatches(text, #"[A-Za-z_]\w*\(\s*\$"#), 2) * 3     // func($var
         score += min(countMatches(text, #"function\s+\w+\s*\([^)\n]*\$"#), 2) * 3
         score += min(countMatches(text, #"foreach\s*\(\s*\$"#), 2) * 3
         score += min(countMatches(text, #"\w::\w"#), 2)                      // Class::method

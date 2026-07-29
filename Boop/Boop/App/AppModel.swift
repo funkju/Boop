@@ -393,8 +393,21 @@ final class AppModel: ObservableObject {
     // MARK: - Buffer REPL (⌘↩)
 
     func runBuffer() {
+        let code = BufferRunner.stripTrailingResultBlock(editor.textStorage.string)
+        guard !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+
+        var effectiveLanguage = language.id
+        if effectiveLanguage == .plainText,
+           ContentDetector.detect(String(code.prefix(16_384)))?.id == .php {
+            // Don't wait for the debounced detector — sniff at run time so
+            // freshly typed PHP doesn't get evaluated as JavaScript.
+            language = .php
+            languageWasAutoDetected = true
+            effectiveLanguage = .php
+        }
+
         let runner: (String) -> Result<String, BufferRunner.RunError>
-        switch language.id {
+        switch effectiveLanguage {
         case .javascript, .jsx, .plainText:
             // Plain text runs as JavaScript — the calculator-scratchpad case.
             runner = BufferRunner.runJavaScript
@@ -404,9 +417,6 @@ final class AppModel: ObservableObject {
             setStatus(.error("Run works with JavaScript and PHP (this is \(language.tsName))"))
             return
         }
-
-        let code = BufferRunner.stripTrailingResultBlock(editor.textStorage.string)
-        guard !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
 
         Task.detached(priority: .userInitiated) {
             let result = runner(code)

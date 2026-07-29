@@ -69,6 +69,17 @@ final class ContentDetectorTests: XCTestCase {
         XCTAssertEqual(ContentDetector.detect(text)?.id, .php)
     }
 
+    func testDetectsShortPHPWithBuiltinCall() {
+        // The buffer that ran as JavaScript by mistake: one assignment plus
+        // a builtin call on a $var is enough to read as PHP.
+        let text = """
+        $test = 14;
+        ucwords($test);
+        """
+        XCTAssertTrue(ContentDetector.looksLikePHP(text))
+        XCTAssertEqual(ContentDetector.detect(text)?.id, .php)
+    }
+
     func testRejectsShellScriptDollarVariables() {
         let text = """
         #!/bin/sh
