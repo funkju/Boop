@@ -219,7 +219,7 @@ final class AppModel: ObservableObject {
 
     // MARK: - Shortcut overlay (hold ⌘)
 
-    @Published private(set) var shortcutOverlayVisible = false
+    private let shortcutOverlayPanel = ShortcutOverlayPanel()
     private var shortcutOverlayTask: Task<Void, Never>?
 
     private func setupShortcutOverlay() {
@@ -253,21 +253,19 @@ final class AppModel: ObservableObject {
     }
 
     private func scheduleShortcutOverlay() {
-        guard !shortcutOverlayVisible else { return }
+        guard !shortcutOverlayPanel.isVisible else { return }
         shortcutOverlayTask?.cancel()
         shortcutOverlayTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(700))
             guard let self, !Task.isCancelled else { return }
-            self.shortcutOverlayVisible = true
+            self.shortcutOverlayPanel.show()
         }
     }
 
     private func hideShortcutOverlay() {
         shortcutOverlayTask?.cancel()
         shortcutOverlayTask = nil
-        if shortcutOverlayVisible {
-            shortcutOverlayVisible = false
-        }
+        shortcutOverlayPanel.hide()
     }
 
     func togglePalette() {
