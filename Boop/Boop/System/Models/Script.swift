@@ -30,7 +30,19 @@ class Script: NSObject {
         self.setupRequire(context: context)
         
         context.setObject(ScriptExecution.self, forKeyedSubscript: "ScriptExecution" as NSString)
-        
+
+        // Native bridge so a palette script can run PHP (scripts themselves
+        // are sandboxed JS). Returns {ok, output} or {ok, error}.
+        let evalPHP: @convention(block) (String) -> [String: Any] = { code in
+            switch BufferRunner.runPHP(code) {
+            case .success(let output):
+                return ["ok": true, "output": output]
+            case .failure(let error):
+                return ["ok": false, "error": error.errorDescription ?? "PHP failed"]
+            }
+        }
+        context.setObject(evalPHP, forKeyedSubscript: "__evalPHP" as NSString)
+
         context.evaluateScript(self.scriptCode, withSourceURL: url)
         
         return context
