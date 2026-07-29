@@ -390,6 +390,54 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // MARK: - Buffer REPL (⌘↩)
+
+    func runBuffer() {
+        let runner: (String) -> Result<String, BufferRunner.RunError>
+        switch language.id {
+        case .javascript, .jsx, .plainText:
+            // Plain text runs as JavaScript — the calculator-scratchpad case.
+            runner = BufferRunner.runJavaScript
+        case .php:
+            runner = BufferRunner.runPHP
+        default:
+            setStatus(.error("Run works with JavaScript and PHP (this is \(language.tsName))"))
+            return
+        }
+
+        let code = BufferRunner.stripTrailingResultBlock(editor.textStorage.string)
+        guard !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+
+        Task.detached(priority: .userInitiated) {
+            let result = runner(code)
+            await MainActor.run { [weak self] in
+                self?.finishRun(code: code, result: result)
+            }
+        }
+    }
+
+    private func finishRun(code: String, result: Result<String, BufferRunner.RunError>) {
+        switch result {
+        case .success(let output):
+            // The buffer may have moved on while PHP ran; a stale result
+            // spliced under new code would be quietly wrong.
+            guard BufferRunner.stripTrailingResultBlock(editor.textStorage.string) == code,
+                  let textView = editor.textView else {
+                setStatus(.error("Buffer changed while running — result discarded"))
+                return
+            }
+            let keepLength = (code as NSString).length
+            let fullLength = (editor.textStorage.string as NSString).length
+            let tail = NSRange(location: keepLength, length: fullLength - keepLength)
+            textView.replaceCharacters(in: tail, with: "\n" + BufferRunner.formatResultBlock(output))
+            if previewVisible {
+                previewText = editor.textStorage.string
+            }
+        case .failure(let error):
+            setStatus(.error(error.errorDescription ?? "Run failed"))
+        }
+    }
+
     func run(_ script: Script) {
         hidePalette()
         guard let textView = editor.textView else { return }

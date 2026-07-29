@@ -76,6 +76,11 @@ struct BoopApp: App {
                 }
                 .keyboardShortcut("b", modifiers: .command)
 
+                Button("Run Buffer") {
+                    model.runBuffer()
+                }
+                .keyboardShortcut(.return, modifiers: .command)
+
                 Button("Run Last Script Again") {
                     model.runLastScriptAgain()
                 }
