@@ -214,6 +214,60 @@ final class AppModel: ObservableObject {
         editor.onTextChange = { [weak self] in
             self?.scheduleContentDetection()
         }
+        setupShortcutOverlay()
+    }
+
+    // MARK: - Shortcut overlay (hold ⌘)
+
+    @Published private(set) var shortcutOverlayVisible = false
+    private var shortcutOverlayTask: Task<Void, Never>?
+
+    private func setupShortcutOverlay() {
+        // Local monitors only fire while the app is active, which is
+        // exactly the scope we want.
+        NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            MainActor.assumeIsolated {
+                let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+                if flags == .command {
+                    self?.scheduleShortcutOverlay()
+                } else {
+                    self?.hideShortcutOverlay()
+                }
+            }
+            return event
+        }
+        // Any actual keypress or click means they weren't just wondering.
+        NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown]) { [weak self] event in
+            MainActor.assumeIsolated {
+                self?.hideShortcutOverlay()
+            }
+            return event
+        }
+        // ⌘Tab away: the release never reaches us, so hide on deactivate.
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willResignActiveNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.hideShortcutOverlay() }
+        }
+    }
+
+    private func scheduleShortcutOverlay() {
+        guard !shortcutOverlayVisible else { return }
+        shortcutOverlayTask?.cancel()
+        shortcutOverlayTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(700))
+            guard let self, !Task.isCancelled else { return }
+            self.shortcutOverlayVisible = true
+        }
+    }
+
+    private func hideShortcutOverlay() {
+        shortcutOverlayTask?.cancel()
+        shortcutOverlayTask = nil
+        if shortcutOverlayVisible {
+            shortcutOverlayVisible = false
+        }
     }
 
     func togglePalette() {

@@ -57,6 +57,13 @@ struct ContentView: View {
                     .transition(.opacity)
             }
 
+            if model.shortcutOverlayVisible {
+                Color.black.opacity(0.2)
+                    .ignoresSafeArea()
+                ShortcutOverlayView()
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+
             if model.paletteVisible {
                 Color.black.opacity(0.25)
                     .ignoresSafeArea()
@@ -71,6 +78,7 @@ struct ContentView: View {
         }
         .animation(.spring(duration: 0.2), value: model.paletteVisible)
         .animation(.easeOut(duration: 0.15), value: model.previewVisible)
+        .animation(.easeOut(duration: 0.15), value: model.shortcutOverlayVisible)
         // Real toolbar items so macOS itself lines them up with the
         // traffic lights; the toolbar chrome stays hidden.
         .toolbar {
