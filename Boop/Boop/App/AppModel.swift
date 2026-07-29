@@ -440,7 +440,13 @@ final class AppModel: ObservableObject {
         let keepLength = (code as NSString).length
         let fullLength = (editor.textStorage.string as NSString).length
         let tail = NSRange(location: keepLength, length: fullLength - keepLength)
-        textView.replaceCharacters(in: tail, with: "\n" + block)
+        // Trailing newline leaves the cursor on a fresh line under the
+        // result, ready for the next command.
+        textView.replaceCharacters(in: tail, with: "\n" + block + "\n")
+        textView.selectionManager.setSelectedRange(
+            NSRange(location: (editor.textStorage.string as NSString).length, length: 0)
+        )
+        textView.scrollSelectionToVisible()
         if previewVisible {
             previewText = editor.textStorage.string
         }
