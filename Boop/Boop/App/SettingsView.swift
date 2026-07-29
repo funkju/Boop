@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var model: AppModel
+    @AppStorage(BufferRunner.phpBinaryDefaultsKey) private var phpBinaryPath = ""
 
     var body: some View {
         TabView {
@@ -49,8 +50,49 @@ struct SettingsView: View {
             Text("Scripts in this folder are loaded alongside the built-in ones. ⇧⌘R reloads them without relaunching.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            Divider()
+
+            LabeledContent("PHP binary") {
+                TextField("Auto-detect", text: $phpBinaryPath)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+            }
+
+            HStack {
+                Button("Choose…") { choosePHPBinary() }
+                if !phpBinaryPath.isEmpty {
+                    Button("Use Auto-Detected") { phpBinaryPath = "" }
+                }
+            }
+
+            Text(phpStatus)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .padding(20)
+    }
+
+    private var phpStatus: String {
+        if let path = BufferRunner.phpPath {
+            return "Run Buffer (⌘↩) uses \(path)"
+        }
+        return phpBinaryPath.isEmpty
+            ? "No PHP found — install PHP (Homebrew or Herd) or set a path."
+            : "Not an executable: \(phpBinaryPath)"
+    }
+
+    private func choosePHPBinary() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = true
+        panel.prompt = "Use Binary"
+        panel.directoryURL = URL(fileURLWithPath: "/opt/homebrew/bin")
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        phpBinaryPath = url.path
     }
 
     private var currentScriptsFolder: String {

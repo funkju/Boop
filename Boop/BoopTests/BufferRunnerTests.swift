@@ -104,4 +104,22 @@ final class BufferRunnerTests: XCTestCase {
             XCTFail("Parse error should not succeed")
         }
     }
+
+    func testCustomPHPBinarySettingOverridesAutoDetection() {
+        let defaults = UserDefaults.standard
+        defer { defaults.removeObject(forKey: BufferRunner.phpBinaryDefaultsKey) }
+
+        defaults.set("/bin/echo", forKey: BufferRunner.phpBinaryDefaultsKey)
+        XCTAssertEqual(BufferRunner.phpPath, "/bin/echo")
+
+        // A bad custom path surfaces as "no PHP" rather than silently
+        // falling back to auto-detection.
+        defaults.set("/nonexistent/php", forKey: BufferRunner.phpBinaryDefaultsKey)
+        XCTAssertNil(BufferRunner.phpPath)
+
+        defaults.set("", forKey: BufferRunner.phpBinaryDefaultsKey)
+        XCTAssertEqual(BufferRunner.phpPath != nil, !BufferRunner.phpCandidates.filter {
+            FileManager.default.isExecutableFile(atPath: $0)
+        }.isEmpty)
+    }
 }

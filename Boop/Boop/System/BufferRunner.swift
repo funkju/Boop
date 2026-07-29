@@ -122,14 +122,27 @@ enum BufferRunner {
 
     // MARK: - PHP
 
-    static let phpCandidates = [
-        "/opt/homebrew/bin/php",
-        "/usr/local/bin/php",
-        "/usr/bin/php",
-    ]
+    /// Settings › Scripts can pin a specific binary; empty means auto-detect.
+    static let phpBinaryDefaultsKey = "phpBinaryPath"
+
+    static var phpCandidates: [String] {
+        [
+            "/opt/homebrew/bin/php",
+            NSHomeDirectory() + "/Library/Application Support/Herd/bin/php",
+            "/usr/local/bin/php",
+            "/usr/bin/php",
+        ]
+    }
 
     static var phpPath: String? {
-        phpCandidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+        if let custom = UserDefaults.standard.string(forKey: phpBinaryDefaultsKey),
+           !custom.isEmpty {
+            let expanded = (custom as NSString).expandingTildeInPath
+            // A bad custom path is a misconfiguration to surface, not one
+            // to silently paper over with auto-detection.
+            return FileManager.default.isExecutableFile(atPath: expanded) ? expanded : nil
+        }
+        return phpCandidates.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
     static func runPHP(_ code: String) -> Result<String, RunError> {
