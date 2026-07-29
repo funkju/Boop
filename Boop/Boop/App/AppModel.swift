@@ -417,24 +417,32 @@ final class AppModel: ObservableObject {
     }
 
     private func finishRun(code: String, result: Result<String, BufferRunner.RunError>) {
+        // The buffer may have moved on while PHP ran; a stale result
+        // spliced under new code would be quietly wrong.
+        guard BufferRunner.stripTrailingResultBlock(editor.textStorage.string) == code,
+              let textView = editor.textView else {
+            setStatus(.error("Buffer changed while running — result discarded"))
+            return
+        }
+
+        // Errors are results too — they go in the buffer like any output,
+        // with the status pill flagging them in red on top.
+        let block: String
         switch result {
         case .success(let output):
-            // The buffer may have moved on while PHP ran; a stale result
-            // spliced under new code would be quietly wrong.
-            guard BufferRunner.stripTrailingResultBlock(editor.textStorage.string) == code,
-                  let textView = editor.textView else {
-                setStatus(.error("Buffer changed while running — result discarded"))
-                return
-            }
-            let keepLength = (code as NSString).length
-            let fullLength = (editor.textStorage.string as NSString).length
-            let tail = NSRange(location: keepLength, length: fullLength - keepLength)
-            textView.replaceCharacters(in: tail, with: "\n" + BufferRunner.formatResultBlock(output))
-            if previewVisible {
-                previewText = editor.textStorage.string
-            }
+            block = BufferRunner.formatResultBlock(output)
         case .failure(let error):
-            setStatus(.error(error.errorDescription ?? "Run failed"))
+            let message = error.errorDescription ?? "Run failed"
+            block = BufferRunner.formatErrorBlock(message)
+            setStatus(.error(message))
+        }
+
+        let keepLength = (code as NSString).length
+        let fullLength = (editor.textStorage.string as NSString).length
+        let tail = NSRange(location: keepLength, length: fullLength - keepLength)
+        textView.replaceCharacters(in: tail, with: "\n" + block)
+        if previewVisible {
+            previewText = editor.textStorage.string
         }
     }
 

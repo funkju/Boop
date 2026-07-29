@@ -1,26 +1,26 @@
 /**
-     {
-         "api":1,
-         "name":"Eval Javascript",
-         "description":"Runs your text as Javascript Code.",
-         "author":"Sebastiaan Besselsen",
-         "icon":"command",
-         "tags":"js,script,run"
-     }
- **/
+	{
+		"api":1,
+		"name":"Eval Javascript",
+		"description":"Runs your text as JavaScript and appends the result.",
+		"author":"Justin's fork",
+		"icon":"command",
+		"tags":"js,javascript,eval,run,execute,script"
+	}
+**/
 
-function main(input) {
-    const script = input.text.replace(/\n\n\/\/ Result:[\s\S]*$/, '');
+function main(state) {
+	// Same trailing block as ⌘↩ Run Buffer, so the two compose.
+	const code = state.text.replace(/\n+\/\/ (=>|!!) [^\n]*(\n\/\/    [^\n]*)*\s*$/, '');
 
-    let output = '';
-    try {
-        output = eval(script);
-        if (typeof output !== 'string') {
-            output = JSON.stringify(output, null, 2);
-        }
-    } catch (e) {
-        input.postError(e.toString());
-    }
+	const result = __evalJS(code);
+	const marker = result.ok ? '// => ' : '// !! ';
+	const lines = (result.ok ? result.output : result.error).split('\n');
 
-    input.text = script + "\n\n// Result:\n\n" + output;
+	state.text = code + '\n' + marker + lines.shift() +
+		lines.map(function (l) { return '\n//    ' + l; }).join('');
+
+	if (!result.ok) {
+		state.postError(result.error.split('\n')[0]);
+	}
 }

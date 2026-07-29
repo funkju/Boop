@@ -30,12 +30,23 @@ enum BufferRunner {
     // MARK: - Result block
 
     static let resultPrefix = "// => "
+    /// Errors are a valid outcome of a run — they land in the buffer too,
+    /// just visibly marked as errors.
+    static let errorPrefix = "// !! "
     static let continuationPrefix = "//    "
 
     static func formatResultBlock(_ output: String) -> String {
+        block(output, prefix: resultPrefix)
+    }
+
+    static func formatErrorBlock(_ message: String) -> String {
+        block(message, prefix: errorPrefix)
+    }
+
+    private static func block(_ output: String, prefix: String) -> String {
         let lines = output.split(separator: "\n", omittingEmptySubsequences: false)
-        guard let first = lines.first else { return resultPrefix.trimmingCharacters(in: .whitespaces) }
-        var block = resultPrefix + first
+        guard let first = lines.first else { return prefix.trimmingCharacters(in: .whitespaces) }
+        var block = prefix + first
         for line in lines.dropFirst() {
             block += "\n" + continuationPrefix + line
         }
@@ -52,7 +63,9 @@ enum BufferRunner {
         while last >= 0, lines[last].trimmingCharacters(in: .whitespaces).isEmpty { last -= 1 }
         var first = last
         while first >= 0, lines[first].hasPrefix(continuationPrefix) { first -= 1 }
-        guard first >= 0, lines[first].hasPrefix(resultPrefix) else { return text }
+        guard first >= 0,
+              lines[first].hasPrefix(resultPrefix) || lines[first].hasPrefix(errorPrefix)
+        else { return text }
         lines.removeSubrange(first...)
         while let trailing = lines.last, trailing.trimmingCharacters(in: .whitespaces).isEmpty {
             lines.removeLast()

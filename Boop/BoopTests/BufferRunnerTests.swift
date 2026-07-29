@@ -41,6 +41,24 @@ final class BufferRunnerTests: XCTestCase {
         XCTAssertEqual(twice, once)
     }
 
+    func testFormatsErrorBlock() {
+        XCTAssertEqual(
+            BufferRunner.formatErrorBlock("ReferenceError: nope is not defined"),
+            "// !! ReferenceError: nope is not defined"
+        )
+    }
+
+    func testStripsTrailingErrorBlock() {
+        let text = "nope()\n// !! ReferenceError: nope is not defined"
+        XCTAssertEqual(BufferRunner.stripTrailingResultBlock(text), "nope()")
+    }
+
+    func testErrorBlockReplacedByResultOnRerun() {
+        let failed = "1 + 2\n" + BufferRunner.formatErrorBlock("oops")
+        let code = BufferRunner.stripTrailingResultBlock(failed)
+        XCTAssertEqual(code + "\n" + BufferRunner.formatResultBlock("3"), "1 + 2\n// => 3")
+    }
+
     func testLeavesOrdinaryTrailingCommentsAlone() {
         let text = "doThing()\n// regular comment at the end"
         XCTAssertEqual(BufferRunner.stripTrailingResultBlock(text), text)

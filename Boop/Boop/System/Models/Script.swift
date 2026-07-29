@@ -31,17 +31,21 @@ class Script: NSObject {
         
         context.setObject(ScriptExecution.self, forKeyedSubscript: "ScriptExecution" as NSString)
 
-        // Native bridge so a palette script can run PHP (scripts themselves
-        // are sandboxed JS). Returns {ok, output} or {ok, error}.
-        let evalPHP: @convention(block) (String) -> [String: Any] = { code in
-            switch BufferRunner.runPHP(code) {
-            case .success(let output):
-                return ["ok": true, "output": output]
-            case .failure(let error):
-                return ["ok": false, "error": error.errorDescription ?? "PHP failed"]
+        // Native bridges so the Eval palette scripts share the ⌘↩ Run Buffer
+        // engine (a fresh JSC context with console capture for JS, the local
+        // php binary for PHP). Both return {ok, output} or {ok, error}.
+        func bridge(_ run: @escaping (String) -> Result<String, BufferRunner.RunError>) -> @convention(block) (String) -> [String: Any] {
+            { code in
+                switch run(code) {
+                case .success(let output):
+                    return ["ok": true, "output": output]
+                case .failure(let error):
+                    return ["ok": false, "error": error.errorDescription ?? "Run failed"]
+                }
             }
         }
-        context.setObject(evalPHP, forKeyedSubscript: "__evalPHP" as NSString)
+        context.setObject(bridge(BufferRunner.runPHP), forKeyedSubscript: "__evalPHP" as NSString)
+        context.setObject(bridge(BufferRunner.runJavaScript), forKeyedSubscript: "__evalJS" as NSString)
 
         context.evaluateScript(self.scriptCode, withSourceURL: url)
         
