@@ -80,6 +80,17 @@ final class ContentDetectorTests: XCTestCase {
         XCTAssertEqual(ContentDetector.detect(text)?.id, .php)
     }
 
+    func testDetectsSingleLinePHPAssignment() {
+        // One line of "$var = …" is all the evidence a one-line buffer has.
+        XCTAssertTrue(ContentDetector.looksLikePHP("$var = 1;"))
+        XCTAssertEqual(ContentDetector.detect("$var = 1;")?.id, .php)
+    }
+
+    func testRejectsSingleLineShellUsage() {
+        XCTAssertFalse(ContentDetector.looksLikePHP(#"echo "$HOME""#))
+        XCTAssertFalse(ContentDetector.looksLikePHP(#"cp "$SRC" "$DST""#))
+    }
+
     func testRejectsShellScriptDollarVariables() {
         let text = """
         #!/bin/sh

@@ -93,6 +93,17 @@ enum MarkdownDetector {
         let total = scores.reduce(0) { sum, entry in
             sum + min(entry.value, caps[entry.key] ?? entry.value)
         }
+
+        // Demands scale with the evidence available: a one-line "# Title"
+        // IS the whole document, so one strong signal is enough. Longer
+        // buffers have room to corroborate and must.
+        let contentLineCount = text.components(separatedBy: .newlines)
+            .prefix(400)
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            .count
+        if contentLineCount <= 2 {
+            return total >= 2
+        }
         let threshold = leadingHeading ? 4 : 6
         return total >= threshold && scores.count >= 2
     }

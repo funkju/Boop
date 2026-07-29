@@ -46,6 +46,18 @@ final class MarkdownDetectorTests: XCTestCase {
         XCTAssertTrue(MarkdownDetector.looksLikeMarkdown(text))
     }
 
+    func testDetectsSingleHeadingLine() {
+        // A one-line buffer is the whole document — "# happy" is markdown.
+        XCTAssertTrue(MarkdownDetector.looksLikeMarkdown("# happy"))
+        XCTAssertTrue(MarkdownDetector.looksLikeMarkdown("## Section title"))
+    }
+
+    func testSingleWeakSignalLineIsNotEnough() {
+        // One list item or italic word alone stays plain text.
+        XCTAssertFalse(MarkdownDetector.looksLikeMarkdown("- milk"))
+        XCTAssertFalse(MarkdownDetector.looksLikeMarkdown("read *this* now"))
+    }
+
     func testDetectsShortNoteWithLeadingHeading() {
         // Opening straight with "# Title" lowers the bar — a heading plus
         // one inline signal is enough for a quick note.

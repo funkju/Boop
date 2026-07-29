@@ -61,7 +61,14 @@ enum ContentDetector {
         score += min(countMatches(text, #"function\s+\w+\s*\([^)\n]*\$"#), 2) * 3
         score += min(countMatches(text, #"foreach\s*\(\s*\$"#), 2) * 3
         score += min(countMatches(text, #"\w::\w"#), 2)                      // Class::method
-        return score >= 6
+
+        // A tiny buffer can't accumulate much evidence — "$var = 1" alone
+        // is PHP. Longer text must corroborate (a shell script's worth of
+        // "$HOME"s stays under the higher bar via the usage cap).
+        let lineCount = text.components(separatedBy: .newlines)
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            .count
+        return score >= (lineCount <= 2 ? 3 : 6)
     }
 
     private static func countMatches(_ text: String, _ pattern: String) -> Int {
