@@ -21,6 +21,9 @@ final class EditorCoordinator: TextViewCoordinator {
     /// Fired after every edit; AppModel uses it for markdown detection.
     var onTextChange: (() -> Void)?
 
+    /// TextView.delegate is weak — keep the proxy alive.
+    private var quoteSuppressor: QuotePairSuppressor?
+
     var textView: TextView? {
         controller?.textView
     }
@@ -31,6 +34,13 @@ final class EditorCoordinator: TextViewCoordinator {
         // even a transparent color — which blocks the window's glass
         // material. Stop drawing; the tint lives in ContentView instead.
         controller.scrollView?.drawsBackground = false
+
+        // Boop buffers are prose as often as code: typing don't should not
+        // become don''t. Route quote keystrokes around the controller's
+        // TextFormation pipeline so no closing quote is auto-inserted.
+        let suppressor = QuotePairSuppressor(controller: controller)
+        quoteSuppressor = suppressor
+        controller.textView.delegate = suppressor
     }
 
     func textViewDidChangeText(controller: TextViewController) {
@@ -51,5 +61,35 @@ final class EditorCoordinator: TextViewCoordinator {
 
     func destroy() {
         controller = nil
+        quoteSuppressor = nil
+    }
+}
+
+/// Sits between the TextView and its TextViewController, passing every
+/// delegate call through except one case: a typed quote character. Those
+/// skip the controller's filter pipeline (which would auto-insert a matching
+/// closing quote) and are applied verbatim. Brackets keep their smart
+/// pairing.
+private final class QuotePairSuppressor: TextViewDelegate {
+
+    private weak var controller: TextViewController?
+
+    init(controller: TextViewController) {
+        self.controller = controller
+    }
+
+    func textView(_ textView: TextView, willReplaceContentsIn range: NSRange, with string: String) {
+        controller?.textView(textView, willReplaceContentsIn: range, with: string)
+    }
+
+    func textView(_ textView: TextView, didReplaceContentsIn range: NSRange, with string: String) {
+        controller?.textView(textView, didReplaceContentsIn: range, with: string)
+    }
+
+    func textView(_ textView: TextView, shouldReplaceContentsIn range: NSRange, with string: String) -> Bool {
+        if string == "\"" || string == "'" || string == "`" {
+            return true
+        }
+        return controller?.textView(textView, shouldReplaceContentsIn: range, with: string) ?? true
     }
 }
