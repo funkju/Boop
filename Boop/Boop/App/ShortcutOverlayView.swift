@@ -47,24 +47,26 @@ struct ShortcutOverlayView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 44) {
             ForEach(sections, id: \.title) { section in
-                VStack(alignment: .leading, spacing: 13) {
+                VStack(alignment: .leading, spacing: 15) {
                     Text(section.title.uppercased())
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.tertiary)
-                        .padding(.bottom, 3)
+                        .padding(.bottom, 4)
                     ForEach(section.items, id: \.keys) { item in
-                        HStack(spacing: 12) {
+                        HStack(spacing: 14) {
                             Text(item.keys)
-                                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .frame(minWidth: 56)
+                                .font(.system(size: 17, weight: .medium, design: .monospaced))
+                                .tracking(4)
+                                .padding(.leading, 12)
+                                .padding(.trailing, 8)
+                                .padding(.vertical, 5)
+                                .frame(minWidth: 72)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 6)
+                                    RoundedRectangle(cornerRadius: 7)
                                         .fill(Color.primary.opacity(0.08))
                                 )
                             Text(item.label)
-                                .font(.system(size: 14.5))
+                                .font(.system(size: 17))
                                 .foregroundStyle(.secondary)
                             Spacer(minLength: 0)
                         }
@@ -74,6 +76,9 @@ struct ShortcutOverlayView: View {
         }
         .padding(40)
         .glassEffect(.regular, in: .rect(cornerRadius: 22))
+        // The hosting view sizes the panel from fittingSize, which can
+        // compress and truncate text — force the ideal size instead.
+        .fixedSize()
     }
 }
 
@@ -87,7 +92,7 @@ final class ShortcutOverlayPanel {
     var isVisible: Bool { panel != nil }
 
     func show() {
-        guard panel == nil else { return }
+        guard panel == nil, !Self.appSwitcherIsUp else { return }
 
         let hosting = NSHostingView(rootView: ShortcutOverlayView())
         hosting.frame.size = hosting.fittingSize
@@ -124,6 +129,25 @@ final class ShortcutOverlayPanel {
             panel.animator().alphaValue = 1
         }
         self.panel = panel
+    }
+
+    /// The system eats ⌘Tab, so our event monitors never hear about the
+    /// app switcher — a pending show would pop up behind it. The switcher
+    /// is a Dock-owned window at the Dock layer (20) whose backdrop covers
+    /// the screen; the Dock bar itself is only ever a thin strip.
+    private static var appSwitcherIsUp: Bool {
+        guard let windows = CGWindowListCopyWindowInfo(
+            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
+        ) as? [[String: Any]] else { return false }
+        return windows.contains { window in
+            guard (window[kCGWindowOwnerName as String] as? String) == "Dock",
+                  (window[kCGWindowLayer as String] as? Int ?? 0) >= 20,
+                  let bounds = window[kCGWindowBounds as String] as? [String: Any],
+                  let width = bounds["Width"] as? Double,
+                  let height = bounds["Height"] as? Double
+            else { return false }
+            return width > 500 && height > 500
+        }
     }
 
     func hide() {
