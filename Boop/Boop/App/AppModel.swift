@@ -52,9 +52,9 @@ final class AppModel: ObservableObject {
         objectWillChange.send()
     }
 
-    // MARK: - Pages (in-memory only, by design — Boop stays disposable)
+    // MARK: - Pages
 
-    struct Page {
+    struct Page: Codable {
         var text = ""
         var languageID: String = CodeLanguage.default.id.rawValue
         var autoDetected = false
@@ -119,6 +119,7 @@ final class AppModel: ObservableObject {
         lastLoadedText = page.lastLoadedText
         watchOpenedFile()
         objectWillChange.send()
+        schedulePersist()
     }
 
     // MARK: - Opened file
@@ -213,8 +214,68 @@ final class AppModel: ObservableObject {
         }
         editor.onTextChange = { [weak self] in
             self?.scheduleContentDetection()
+            self?.schedulePersist()
         }
         setupShortcutOverlay()
+        restorePages()
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.persistNow() }
+        }
+    }
+
+    // MARK: - Page persistence
+    //
+    // Pages survive relaunch: buffer text, per-page language + auto-detect
+    // flag, linked file, and the current page index. Saves are debounced on
+    // every edit and flushed on quit.
+
+    private struct PersistedState: Codable {
+        var pages: [Page]
+        var currentPageIndex: Int
+    }
+
+    private var persistTask: Task<Void, Never>?
+
+    private static var persistenceURL: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Boop", isDirectory: true)
+            .appendingPathComponent("pages.json")
+    }
+
+    private func schedulePersist() {
+        persistTask?.cancel()
+        persistTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard let self, !Task.isCancelled else { return }
+            self.persistNow()
+        }
+    }
+
+    private func persistNow() {
+        persistTask?.cancel()
+        persistTask = nil
+        snapshotCurrentPage()
+        let state = PersistedState(pages: pages, currentPageIndex: currentPageIndex)
+        do {
+            let url = Self.persistenceURL
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(), withIntermediateDirectories: true
+            )
+            try JSONEncoder().encode(state).write(to: url, options: .atomic)
+        } catch {
+            // Persistence is best-effort; never interrupt editing over it.
+        }
+    }
+
+    private func restorePages() {
+        guard let data = try? Data(contentsOf: Self.persistenceURL),
+              let state = try? JSONDecoder().decode(PersistedState.self, from: data),
+              !state.pages.isEmpty else { return }
+        pages = state.pages
+        loadPage(at: min(max(0, state.currentPageIndex), pages.count - 1))
     }
 
     // MARK: - Shortcut overlay (hold ⌘)
